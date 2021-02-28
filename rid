@@ -1,0 +1,204 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'etc'
+require 'yaml'
+
+# Handles global config
+class Config
+  attr_reader :root
+
+  def initialize(path, config, parent)
+    @root = path
+    @config = config || {}
+    @parent = parent
+  end
+
+  def [](key)
+    @config[key]
+  end
+
+  def command(name)
+    command = command_hash(name)
+    abort "rid: unknown program #{name}" unless command
+
+    # if command[:extend]
+    #   base_command = command_hash(command[:extend])
+    #   command.delete :extend
+    #   command = base_command.merge(command)
+    # end
+
+    Command.new(self, name, command)
+  end
+
+  def command_hash(name)
+    command = @config.dig(:commands, name.intern)
+
+    if command
+      # Merge in options if we inherit.
+      command = command_inherit(name, command)
+    elsif @parent
+      # Use definition from parent configs if we didn't have the
+      # command.
+      command ||= @parent.command_hash(name)
+    end
+
+    command
+  end
+
+  def command_inherit(name, command)
+    # Merge in options if we inherit.
+    return command unless command[:inherit]
+
+    inherit_from = if command[:inherit].is_a? String
+                     command_hash(command[:inherit])
+                   else
+                     @parent.command_hash(name)
+                   end
+
+    abort 'rid: could not find command to inherit from' unless inherit_from
+
+    inherit_from.merge(command)
+  end
+end
+
+# Handles the nitty-gritty of command setup.
+class Command
+  attr_reader :name, :user_args, :additional_options
+
+  def initialize(config_file, name, config)
+    @config_file = config_file
+    @config = config
+    @name = name
+    abort "rid: no image given for #{@name}" unless config[:image]
+    @user_args = []
+    @additional_options = []
+    # Allow single value cache.
+    @caches = config[:cache] ? Array(config[:cache]) : []
+  end
+
+  # Docker args that "clone the environment". That is, use same uid, cwd, root mount.
+  def clone_args
+    return [] if @config[:raw]
+
+    env = ENV.keys.collect do |x|
+      "-e #{x}"
+    end.join(' ')
+
+    ['--init',
+     "-u #{Process.uid}:#{Process.gid} -w #{Dir.pwd}",
+     "-v #{@config_file.root}:#{@config_file.root}",
+     " #{env}"]
+  end
+
+  def volumes
+    (@config[:mounts] || []).collect do |mountpoint|
+      "-v #{mountpoint}:#{mountpoint}"
+    end + @caches.collect do |name|
+      name.gsub!(/\$USER/, Etc.getlogin)
+      cache_dir = ensure_cachedir(name)
+      "-v #{cache_dir}:#{name}"
+    end
+  end
+
+  def gather_options
+    @command_options << '--rm' unless @config[:keep]
+    @command_options << '-i'
+    @command_options << '-t' if $stdin.tty?
+    @command_options += volumes
+    @command_options += clone_args
+    @command_options << "--entrypoint #{@config[:entrypoint]}" if @config[:entrypoint]
+  end
+
+  def gather_args
+    args = [@config[:args] || '']
+    args += @user_args
+    args = args.join(' ')
+
+    gather_port(args)
+
+    @command_args = args
+  end
+
+  def gather_port(args)
+    return unless @config[:port_from_args]
+
+    abort "rid: invalid port_from_args regexp \"#{@config[:port_from_args]}\"" unless
+      @config[:port_from_args] =~ %r{^/(.*)/$}
+
+    regexp = Regexp.last_match(1)
+
+    abort "rid: invalid port_from_args regexp \"#{regexp}\" didn't match args \"#{args}\"" unless
+      args =~ Regexp.new(regexp)
+
+    port = Regexp.last_match(1)
+
+    abort "rid: invalid port_from_args port number \"#{port}\"" unless port =~ /^\d+$/
+
+    @command_options << "-p #{port}:#{port}"
+  end
+
+  def to_s
+    @command_options = []
+    @command_args = String.new
+    gather_options
+    gather_args
+    "docker run #{@additional_options.join(' ')} #{@command_options.join(' ')} #{@config[:image]} #{@command_args}"
+  end
+
+  def ensure_cachedir(name)
+    # Ensure that the .cache directory exists, just in case.
+    Dir.mkdir(XDG_CACHE_DIR) unless FileTest.exist? XDG_CACHE_DIR
+    # Same for our cache directory.
+    Dir.mkdir(CACHE_DIR) unless FileTest.exist? CACHE_DIR
+    # Create a directory per command.
+    cache_root = File.join(CACHE_DIR, @name)
+    Dir.mkdir(cache_root) unless FileTest.exist? cache_root
+    # And a directory per cache spec.
+    cache_dir = File.join(cache_root, name.gsub(%r{/}, '!'))
+    Dir.mkdir(cache_dir) unless FileTest.exist? cache_dir
+    cache_dir
+  end
+end
+
+XDG_CACHE_DIR = ENV.include?('XDG_CACHE_HOME') ? ENV['XDGCACHE_HOME'] : File.expand_path('~/.cache')
+
+name = File.basename($PROGRAM_NAME)
+name = ARGV.shift if name == 'rid'
+
+abort 'rid: no command given' unless name
+
+CACHE_DIR = File.join(XDG_CACHE_DIR, 'rid').freeze
+
+config_files = []
+
+dir = Dir.pwd
+while dir != '/'
+  file = File.join(dir, '.rid.yml')
+
+  config_files << file if FileTest.exists?(file)
+
+  dir = File.dirname(dir)
+end
+
+abort('rid: no config file found') if config_files.empty?
+
+config_files.reverse!
+
+config = nil
+config_files.each do |file_name|
+  begin
+    config_hash = YAML.safe_load(File.read(file_name), symbolize_names: true, filename: file_name)
+  rescue StandardError => e
+    abort "rid: error loading config file: #{e.message}"
+  end
+
+  config = Config.new(File.dirname(file_name), config_hash, config)
+end
+
+command = config.command(name)
+
+command.user_args << ARGV
+command = command.to_s
+
+exec command
