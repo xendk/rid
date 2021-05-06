@@ -101,3 +101,27 @@ Feature: The program should find the appropiate config files.
       | -i         |
       | not-a-test |
       | testargs   |
+
+  Scenario: Inheriting should override parent.
+    Given I have a "dev" config file:
+      """
+      commands:
+        test:
+          image: test
+          args: testargs
+        test2:
+          image: test2
+      """
+    Given I have a "dev/test" config file:
+      """
+      commands:
+        test:
+          inherit: test2
+          raw: true
+      """
+    When I type "rid test" in "dev/test"
+    Then it runs "docker run" with:
+      | arg      |
+      | --rm     |
+      | -i       |
+      | test2    |
