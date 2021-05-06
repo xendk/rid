@@ -47,14 +47,16 @@ Then('it runs {string} with:') do |string, table|
   orig_line = line.dup
   line.gsub!(/^#{Regexp.escape(string)}/, '') or raise 'Wrong command.'
 
-  # Ignore env variables.
-  line.gsub!(/-e [^ ]+/, '')
-
   table.rows.each do |arg,|
     arg = replace_placeholders(arg)
+
     line.gsub!(/(?<=\s|^)#{Regexp.escape(arg)}(?=\s|$)/, '') or
-      raise "Argument #{arg} not found in command run: \"#{orig_line}\""
+      raise "Argument #{arg} not found in command run: \"#{line}\""
   end
+
+  # Ignore env variables. Doing this last in case the command arg
+  # contains some "-e something" we look for above.
+  line.gsub!(/-e [^ ]+/, '')
 
   line.strip!
   raise "Unexpected argument(s) \"#{line}\"" unless line == ''

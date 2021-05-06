@@ -58,7 +58,9 @@ end
 
 # Handles the nitty-gritty of command setup.
 class Command
+  attr_accessor :run_shell
   attr_reader :name, :user_args, :additional_options
+
 
   def initialize(config_file, name, config)
     @config_file = config_file
@@ -134,6 +136,13 @@ class Command
   end
 
   def to_s
+    # Override entrypoint and arguments when running shell.
+    if @run_shell
+      @config[:entrypoint] = 'sh'
+      @config[:args] = '-c "if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi"'
+      @user_args = []
+    end
+
     @command_options = []
     @command_args = String.new
     gather_options
@@ -159,7 +168,24 @@ end
 XDG_CACHE_DIR = ENV.include?('XDG_CACHE_HOME') ? ENV['XDGCACHE_HOME'] : File.expand_path('~/.cache')
 
 name = File.basename($PROGRAM_NAME)
-name = ARGV.shift if name == 'rid'
+
+run_shell = false
+
+if name == 'rid'
+  name = ARGV.shift
+
+  while name =~ /^-/
+    case name
+    when '-s', '--shell'
+      run_shell = true
+    else
+      abort("rid: unknown option #{name}")
+    end
+
+    name = ARGV.shift
+  end
+
+end
 
 abort 'rid: no command given' unless name
 
@@ -194,6 +220,7 @@ end
 command = config.command(name)
 
 command.user_args << ARGV
+command.run_shell = run_shell
 command = command.to_s
 
 exec command
