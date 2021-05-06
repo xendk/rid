@@ -22,12 +22,6 @@ class Config
     command = command_hash(name)
     abort "rid: unknown program #{name}" unless command
 
-    # if command[:extend]
-    #   base_command = command_hash(command[:extend])
-    #   command.delete :extend
-    #   command = base_command.merge(command)
-    # end
-
     Command.new(self, name, command)
   end
 
