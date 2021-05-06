@@ -16,7 +16,7 @@ specifying how to run the command.
 `entrypoint`
 `image`
 `inherit`
-`mounts`
+`mount`
 `ports_from_args`
 `raw`
 `keep`

@@ -161,7 +161,7 @@ Feature: Smoke test on initially hardcoded commands
       commands:
         dive:
           image: wagoodman/dive:latest
-          mounts:
+          mount:
             - /var/run/docker.sock
           raw: true
       """

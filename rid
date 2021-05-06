@@ -69,6 +69,7 @@ class Command
     @additional_options = []
     # Allow single value cache.
     @caches = config[:cache] ? Array(config[:cache]) : []
+    @mounts = config[:mount] ? Array(config[:mount]) : []
   end
 
   # Docker args that "clone the environment". That is, use same uid, cwd, root mount.
@@ -86,7 +87,7 @@ class Command
   end
 
   def volumes
-    (@config[:mounts] || []).collect do |mountpoint|
+    @mounts.collect do |mountpoint|
       "-v #{mountpoint}:#{mountpoint}"
     end + @caches.collect do |name|
       name.gsub!(/\$USER/, Etc.getlogin)

@@ -64,14 +64,13 @@ Feature: The program should apply the configuration in the config file.
       | hadolint/hadolint |
       | hadolint -        |
 
-  Scenario: Uses mounts configuration
+  Scenario: Supports single mount
     Given I have a "dev" config file:
       """
       commands:
         dive:
           image: wagoodman/dive:latest
-          mounts:
-            - /var/run/docker.sock
+          mount: /var/run/docker.sock
           raw: true
       """
     And I have a "dive" symlink
@@ -81,6 +80,28 @@ Feature: The program should apply the configuration in the config file.
       | --rm                                         |
       | -i                                           |
       | -v /var/run/docker.sock:/var/run/docker.sock |
+      | wagoodman/dive:latest                        |
+      | image                                        |
+
+  Scenario: Supports multiple mounts
+    Given I have a "dev" config file:
+      """
+      commands:
+        dive:
+          image: wagoodman/dive:latest
+          mount:
+            - /var/run/docker.sock
+            - /tmp/random
+          raw: true
+      """
+    And I have a "dive" symlink
+    When I type "dive image" in "dev"
+    Then it runs "docker run" with:
+      | arg                                          |
+      | --rm                                         |
+      | -i                                           |
+      | -v /var/run/docker.sock:/var/run/docker.sock |
+      | -v /tmp/random:/tmp/random                   |
       | wagoodman/dive:latest                        |
       | image                                        |
 
@@ -105,7 +126,7 @@ Feature: The program should apply the configuration in the config file.
       | php:7.4                            |
       | script.php                         |
 
-  Scenario: Uses cache configuration
+  Scenario: Supports single cache configuration
     Given I have a "dev" config file:
       """
       commands:
@@ -124,6 +145,32 @@ Feature: The program should apply the configuration in the config file.
       | -u <user uid>:<user gid>                                                  |
       | -w <user home>/dev                                                        |
       | -v <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
+      | --entrypoint composer                                                     |
+      | reload/drupal-php7-fpm:7.3                                                |
+      | install                                                                   |
+
+  Scenario: Supports multiple cache entries configuration
+    Given I have a "dev" config file:
+      """
+      commands:
+        composer:
+          image: reload/drupal-php7-fpm:7.3
+          entrypoint: composer
+          cache:
+            - "/home/$USER/.cache"
+            - "/home/$USER/.local"
+      """
+    When I type "rid composer install" in "dev"
+    Then it runs "docker run" with:
+      | arg                                                                       |
+      | --rm                                                                      |
+      | -i                                                                        |
+      | --init                                                                    |
+      | -v <user home>/dev:<user home>/dev                                        |
+      | -u <user uid>:<user gid>                                                  |
+      | -w <user home>/dev                                                        |
+      | -v <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
+      | -v <rid cache>/composer/!home!<user name>!.local:/home/<user name>/.local |
       | --entrypoint composer                                                     |
       | reload/drupal-php7-fpm:7.3                                                |
       | install                                                                   |
