@@ -19,3 +19,4 @@ specifying how to run the command.
 `mounts`
 `ports_from_args`
 `raw`
+`keep`
