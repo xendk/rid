@@ -41,7 +41,7 @@ When('I type {string} in {string}') do |command, dir|
 end
 
 Then('it runs {string} with:') do |string, table|
-  raise "Last command failed, output \"#{@output}\", stderr \"#{@stderr}\"" unless @rc.success?
+  raise "Last command failed, output \"#{@stdout}\", stderr \"#{@stderr}\"" unless @rc.success?
 
   line = File.read(LOGFILE).strip
   orig_line = line.dup
@@ -66,7 +66,7 @@ Then('it runs {string} with:') do |string, table|
 end
 
 Then('it should exit with a {string} error') do |string|
-  raise "Command didn't error, output \"#{@output}\", stderr \"#{@stderr}\"" if @rc.success?
+  raise "Command didn't error, output \"#{@stdout}\", stderr \"#{@stderr}\"" if @rc.success?
   raise "Unexpected output \"#{@stderr}\"" unless string == @stderr.strip
 end
 
