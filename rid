@@ -171,6 +171,7 @@ XDG_CACHE_DIR = ENV.include?('XDG_CACHE_HOME') ? ENV['XDGCACHE_HOME'] : File.exp
 name = File.basename($PROGRAM_NAME)
 
 run_shell = false
+dry_run = false
 
 if name == 'rid'
   name = ARGV.shift
@@ -179,6 +180,8 @@ if name == 'rid'
     case name
     when '-s', '--shell'
       run_shell = true
+    when '-n', '--dry-run'
+      dry_run = true
     else
       abort("rid: unknown option #{name}")
     end
@@ -224,4 +227,5 @@ command.user_args << ARGV
 command.run_shell = run_shell
 command = command.to_s
 
-exec command
+puts "rid: would run: #{command}" if dry_run
+exec command unless dry_run

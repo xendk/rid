@@ -69,3 +69,19 @@ Feature: Program should handle arguments.
       | --entrypoint php                   |
       | php:7.4                            |
       | somescript.php                     |
+
+  Scenario: --dry-run should print command
+    Given I have a "dev" config file:
+      """
+      commands:
+        platform:
+          image: platform
+          entrypoint: /usr/local/bin/platform
+          args: some arg
+      """
+    When I type "rid --dry-run platform" in "dev"
+    # This is blittle, but really no way around it.
+    Then it should output:
+      """
+      rid: would run: docker run  --rm -i --init -u 1000:1000 -w /tmp/rid/home/dev -v /tmp/rid/home/dev:/tmp/rid/home/dev  -e HOME -e USER -e USERNAME -e LOGNAME --entrypoint /usr/local/bin/platform platform some arg
+      """

@@ -34,6 +34,8 @@ the command name is still passed to the command.
 `-s`/`--shell`: Launch an interactive shell in the container. Will try
 `/usr/bin/fish`, `/bin/bash` and `/bin/sh`, in that order.
 
+`-n`/`--dry-run`: Print the docker command that would be run.
+
 # `.rid.yml` file format.
 
 A `.rid.yml` file contains a `commands` key, and not much else at the

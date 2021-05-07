@@ -70,6 +70,12 @@ Then('it should exit with a {string} error') do |string|
   raise "Unexpected output \"#{@stderr}\"" unless string == @stderr.strip
 end
 
+Then('it should output:') do |string|
+  raise "Command errored, output \"#{@stdout}\", stderr \"#{@stderr}\"" unless @rc.success?
+
+  raise "Unexpected output \"#{@stdout}\"" unless string == @stdout.strip
+end
+
 def replace_placeholders(string)
   replacements = {
     '<user name>' => Etc.getlogin,
