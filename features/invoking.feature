@@ -43,3 +43,29 @@ Feature: Program should handle arguments.
       | platform                                                                                                            |
       | -c                                                                                                                  |
       | if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi |
+
+  Scenario: Should propagate some env variables
+    Given I have a "dev" config file:
+      """
+      commands:
+        php:
+          image: php:7.4
+          entrypoint: php
+      """
+    And I have a "php" symlink
+    When I type "php somescript.php" in "dev"
+    Then it runs "docker run" with:
+      | arg                                |
+      | --rm                               |
+      | -i                                 |
+      | --init                             |
+      | -e HOME                            |
+      | -e USER                            |
+      | -e USERNAME                        |
+      | -e LOGNAME                         |
+      | -u <user uid>:<user gid>           |
+      | -v <user home>/dev:<user home>/dev |
+      | -w <user home>/dev                 |
+      | --entrypoint php                   |
+      | php:7.4                            |
+      | somescript.php                     |

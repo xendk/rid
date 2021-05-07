@@ -78,7 +78,8 @@ class Command
   def clone_args
     return [] if @config[:raw]
 
-    env = ENV.keys.collect do |x|
+    env_vars = ['HOME', 'USER', 'USERNAME', 'LOGNAME'].collect { |var| ENV.include?(var) ? var : nil }.compact
+    env = env_vars.collect do |x|
       "-e #{x}"
     end.join(' ')
 

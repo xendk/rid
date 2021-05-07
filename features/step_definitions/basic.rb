@@ -55,8 +55,11 @@ Then('it runs {string} with:') do |string, table|
   end
 
   # Ignore env variables. Doing this last in case the command arg
-  # contains some "-e something" we look for above.
-  line.gsub!(/-e [^ ]+/, '')
+  # contains some "-e something" we look for above. Also allows us to
+  # check for the variables above.
+  ['HOME', 'USERNAME', 'LOGNAME', 'USER'].each do |var|
+    line.gsub!(/-e #{var}/, '')
+  end
 
   line.strip!
   raise "Unexpected argument(s) \"#{line}\"" unless line == ''
