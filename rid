@@ -166,7 +166,7 @@ class Command
   end
 end
 
-XDG_CACHE_DIR = ENV.include?('XDG_CACHE_HOME') ? ENV['XDGCACHE_HOME'] : File.expand_path('~/.cache')
+XDG_CACHE_DIR = ENV.include?('XDG_CACHE_HOME') ? ENV['XDG_CACHE_HOME'] : File.expand_path('~/.cache')
 
 name = File.basename($PROGRAM_NAME)
 
