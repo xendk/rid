@@ -8,7 +8,7 @@ TESTROOT = '/tmp/rid'
 TESTBIN = File.join(TESTROOT, 'bin')
 TESTHOME = File.join(TESTROOT, 'home')
 TESTRIDHOME = File.join(TESTROOT, 'home/dev')
-LOGFILE = File.join(TESTROOT, 'execlog')
+LOGFILE = File.join(TESTBIN, 'exec.log')
 
 Dir.mkdir(TESTROOT)
 Dir.mkdir(TESTHOME)
@@ -23,13 +23,7 @@ RID = File.join(TESTBIN, 'rid')
 # Create a fake docker that'll just log the commands.
 DOCKERSTUB = File.join(TESTBIN, 'docker')
 
-File.write(DOCKERSTUB, <<~SCRIPT)
-  #!/usr/bin/bash
-
-  echo docker $@ > #{LOGFILE}
-SCRIPT
-
-FileUtils.chmod('+x', DOCKERSTUB)
+FileUtils.copy(File.join(__dir__, 'docker'), TESTBIN, preserve: true)
 
 # Set $HOME to our test dir and add our bin dir to the path.
 ENV['HOME'] = TESTHOME
