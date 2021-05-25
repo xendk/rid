@@ -42,6 +42,64 @@ A `.rid.yml` file contains a `commands` key, and not much else at the
 moment. `commands` are a hash of commands, which in turn are hashes
 specifying how to run the command.
 
+An example:
+
+``` yaml
+commands:
+  php:
+    image: php:7.4-cli-alpine
+    entrypoint: php
+  composer:
+    image: reload/drupal-php7-fpm:7.4
+    entrypoint: composer
+    cache: "/home/$USER/.cache"
+  serenata:
+    image: serenata
+    cache: "/home/$USER/.cache"
+    port_from_args: /-u (\d+)/
+  node:
+    image: node:14
+    cache: "/home/$USER"
+  npm:
+    inherit: node
+    entrypoint: npm
+  npx:
+    inherit: node
+    entrypoint: npx
+  cypress:
+    inherit: node
+    image: cypress/included:3.8.3
+  docker-langserver:
+    image: rcjsuen/docker-langserver:latest
+  bash-language-server:
+    # Local image.
+    image: bash-language-server
+  css-languageserver:
+    image: css-languageserver
+  typescript-language-server:
+    image: typescript-language-server
+  hadolint:
+    image: hadolint/hadolint
+    # Image has no ENTRYPOINT so command line overrides command, so we
+    # have to specify hadolint on the command line.
+    args: hadolint
+    # Flycheck runs hadolint in stdin mode, so no need to clone environment.
+    raw: true
+  dive:
+    image: wagoodman/dive:latest
+    mount:
+      - /var/run/docker.sock
+    raw: true
+  platform:
+    image: platform
+    mount:
+      # The installed command and setings.
+      - /home/xen/.platformsh/
+      # Platform.sh uses ssh
+      - /home/xen/.ssh/
+    entrypoint: /home/xen/.platformsh/bin/platform
+```
+
 ## Command options
 
 `args`
