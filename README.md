@@ -3,6 +3,21 @@
 `rid`, which is the unimaginative ancronym for "run in docker", is the
 spiritual successor to [dce])(https://github.com/xendk/dce).
 
+# ⚠ Warning ⚠
+
+Per default `rid` gives images run access to everything in the
+directory containing the `.rid.yml` file. If the `.rid.yml` file is
+located in your home directory, this means that any rid run image
+(unless the image uses the `raw` option) can read any file, including
+sensitive files in, for instance, `.ssh` and `.gnupg`. In *theory*
+this means a malicious image could steal your keys.
+
+So it is *not* recommended to put a `.rid.yml` file in your home
+directory (and future versions of `rid` might refuse to run if it
+finds one). Instead you can add a `.rid.yml` file to each project, or
+use a directory for all your project and put your root `.rid.yml` file
+there.
+
 # Invoking
 
 To run a configured command with arguments:
