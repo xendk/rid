@@ -117,12 +117,24 @@ commands:
 
 ## Command options
 
-`args`
-`cache`
-`entrypoint`
-`image`
-`inherit`
-`mount`
-`ports_from_args`
-`raw`
-`keep`
+* `image` (string): The image to run for this command.
+* `entrypoint` (string): Override image entrypoint.
+* `args` (string): Additional args for the image. If the images entrypoint is
+  the desired command, this is provided as command arguments. Any
+  extra arguments from the command line is appended to this.
+* `cache` (string or list of strings): Cache a directory. A cached directory is persistent between
+  command invocations. Behind the scenes `rid` creates a directory per
+  command and mounts it in.
+* `inherit` (bool or string): Inherit from another command. If set to
+  `true`, inherit from a command with the same name in a parent
+  `.rid.yml` file. If set to a string, inherit from the named command.
+* `mount` (string or list of strings): Mount in additional directories.
+* `ports_from_args` (regexp string): Matches the regexp against the
+  command args to extract a port number to bind to the host.
+* `raw` (bool): Don't mount in root filesystem, change effective
+  uid/gid, forward selected env vars or change the working directory.
+  This basically makes rid behave like a vanilla `docker run`. This
+  option is going to be renamed to something more sensible at some
+  time.
+* `keep`: Don't remove the container when the command exits. Useful
+  for debugging.
