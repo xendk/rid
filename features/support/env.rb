@@ -27,6 +27,14 @@ FileUtils.copy(File.join(__dir__, 'docker'), TESTBIN, preserve: true)
 
 # Set $HOME to our test dir and add our bin dir to the path.
 ENV['HOME'] = TESTHOME
+
+# Let's run with our own username.
+ENV['USER'] = 'rid-test'
+
+# These might not all be set in CI, so ensure they are.
+ENV['USERNAME'] = 'rid-test'
+ENV['LOGNAME'] = 'rid-test'
+
 ENV['PATH'] = "#{TESTBIN}:#{ENV['PATH']}"
 
 # Clean up after tests.
