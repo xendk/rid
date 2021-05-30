@@ -73,7 +73,7 @@ end
 Then('it should output:') do |string|
   raise "Command errored, output \"#{@stdout}\", stderr \"#{@stderr}\"" unless @rc.success?
 
-  raise "Unexpected output \"#{@stdout}\"" unless string == @stdout.strip
+  raise "Unexpected output \"#{@stdout}\"" unless replace_placeholders(string) == @stdout.strip
 end
 
 def replace_placeholders(string)
