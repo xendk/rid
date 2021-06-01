@@ -153,15 +153,15 @@ class Command
 
   def ensure_cachedir(name)
     # Ensure that the .cache directory exists, just in case.
-    Dir.mkdir(XDG_CACHE_DIR) unless FileTest.exist? XDG_CACHE_DIR
+    Dir.mkdir(XDG_CACHE_DIR) unless File.exist? XDG_CACHE_DIR
     # Same for our cache directory.
-    Dir.mkdir(CACHE_DIR) unless FileTest.exist? CACHE_DIR
+    Dir.mkdir(CACHE_DIR) unless File.exist? CACHE_DIR
     # Create a directory per command.
     cache_root = File.join(CACHE_DIR, @name)
-    Dir.mkdir(cache_root) unless FileTest.exist? cache_root
+    Dir.mkdir(cache_root) unless File.exist? cache_root
     # And a directory per cache spec.
     cache_dir = File.join(cache_root, name.gsub(%r{/}, '!'))
-    Dir.mkdir(cache_dir) unless FileTest.exist? cache_dir
+    Dir.mkdir(cache_dir) unless File.exist? cache_dir
     cache_dir
   end
 end
@@ -201,7 +201,7 @@ dir = Dir.pwd
 while dir != '/'
   file = File.join(dir, '.rid.yml')
 
-  config_files << file if FileTest.exists?(file)
+  config_files << file if File.exists?(file)
 
   dir = File.dirname(dir)
 end
