@@ -51,7 +51,7 @@ Then('it runs {string} with:') do |string, table|
     arg = replace_placeholders(arg)
 
     line.gsub!(/(?<=\s|^)#{Regexp.escape(arg)}(?=\s|$)/, '') or
-      raise "Argument #{arg} not found in command run: \"#{line}\""
+      raise "Argument #{arg} not found in command run: \"#{orig_line}\""
   end
 
   # Ignore env variables. Doing this last in case the command arg
