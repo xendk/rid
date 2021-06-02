@@ -83,5 +83,5 @@ Feature: Program should handle arguments.
     # This is blittle, but really no way around it.
     Then it should output:
       """
-      rid: would run: docker run  --rm -i --init -u <user uid>:<user gid> -w /tmp/rid/home/dev -v /tmp/rid/home/dev:/tmp/rid/home/dev  -e HOME -e USER -e USERNAME -e LOGNAME --entrypoint /usr/local/bin/platform platform some arg
+      rid: would run: docker run --rm -i --init -u <user uid>:<user gid> -w /tmp/rid/home/dev -v /tmp/rid/home/dev:/tmp/rid/home/dev -e HOME -e USER -e USERNAME -e LOGNAME --entrypoint /usr/local/bin/platform platform some arg
       """

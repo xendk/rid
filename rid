@@ -3,6 +3,63 @@
 
 require 'etc'
 require 'yaml'
+require 'shellwords'
+
+# Encapsulates a docker command.
+class Docker
+  attr_reader :command, :options, :args
+
+  def initialize(command)
+    @command = command
+
+    @options = Hash.new do |hash, key|
+      hash[key] = []
+    end
+
+    @args = []
+  end
+
+  # Docker command as an array.
+  def command_array
+    options = []
+    @options.each_pair do |key, values|
+      switch = key.length == 1 ? "-#{key}" : "--#{key}"
+
+      # Treat Non array-like values as a single value.
+      values = [values] unless values.respond_to?('each')
+
+      values.each do |value|
+        options << switch
+
+        # If the value is true, it's considered an option without a
+        # value. Everything else is `to_s`ed.
+        options << value.to_s if value != true
+      end
+    end
+
+    ['docker', @command, *options, *@args.flatten]
+  end
+
+  # Args as a string.
+  def args_to_s
+    @args.flatten.shelljoin
+  end
+
+  # Docker command string.
+  def to_s
+    command_array.shelljoin
+  end
+
+  # Run docker command.
+  def run
+    system(*command_array)
+  end
+
+  # Exec docker command.
+  def exec
+    Process.exec(*command_array)
+  end
+end
 
 # Handles global config
 class Config
@@ -56,11 +113,10 @@ class Config
   end
 end
 
-# Handles the nitty-gritty of command setup.
+# Handles the nitty-gritty of docker command setup.
 class Command
   attr_accessor :run_shell
   attr_reader :name, :user_args, :additional_options
-
 
   def initialize(config_file, name, config)
     @config_file = config_file
@@ -74,83 +130,80 @@ class Command
     @mounts = config[:mount] ? Array(config[:mount]) : []
   end
 
-  # Docker args that "clone the environment". That is, use same uid, cwd, root mount.
-  def clone_args
-    return [] if @config[:raw]
+  # Return the docker command.
+  def command
+    docker = Docker.new('run')
 
-    env_vars = ['HOME', 'USER', 'USERNAME', 'LOGNAME'].collect { |var| ENV.include?(var) ? var : nil }.compact
-    env = env_vars.collect do |x|
-      "-e #{x}"
-    end.join(' ')
+    # Basic options.
+    docker.options['rm'] = true unless @config[:keep]
+    docker.options['i'] = true
+    docker.options['t'] = true if $stdin.tty?
 
-    ['--init',
-     "-u #{Process.uid}:#{Process.gid} -w #{Dir.pwd}",
-     "-v #{@config_file.root}:#{@config_file.root}",
-     " #{env}"]
-  end
+    # Volumes and cache directories.
+    @mounts.each do |mountpoint|
+      docker.options['v'] << "#{mountpoint}:#{mountpoint}"
+    end
 
-  def volumes
-    @mounts.collect do |mountpoint|
-      "-v #{mountpoint}:#{mountpoint}"
-    end + @caches.collect do |name|
+    @caches.each do |name|
       name.gsub!(/\$USER/, Etc.getlogin)
       cache_dir = ensure_cachedir(name)
-      "-v #{cache_dir}:#{name}"
-    end
-  end
-
-  def gather_options
-    @command_options << '--rm' unless @config[:keep]
-    @command_options << '-i'
-    @command_options << '-t' if $stdin.tty?
-    @command_options += volumes
-    @command_options += clone_args
-    @command_options << "--entrypoint #{@config[:entrypoint]}" if @config[:entrypoint]
-  end
-
-  def gather_args
-    args = [@config[:args] || '']
-    args += @user_args
-    args = args.join(' ')
-
-    gather_port(args)
-
-    @command_args = args
-  end
-
-  def gather_port(args)
-    return unless @config[:port_from_args]
-
-    abort "rid: invalid port_from_args regexp \"#{@config[:port_from_args]}\"" unless
-      @config[:port_from_args] =~ %r{^/(.*)/$}
-
-    regexp = Regexp.last_match(1)
-
-    abort "rid: invalid port_from_args regexp \"#{regexp}\" didn't match args \"#{args}\"" unless
-      args =~ Regexp.new(regexp)
-
-    port = Regexp.last_match(1)
-
-    abort "rid: invalid port_from_args port number \"#{port}\"" unless port =~ /^\d+$/
-
-    @command_options << "-p #{port}:#{port}"
-  end
-
-  def to_s
-    # Override entrypoint and arguments when running shell.
-    if @run_shell
-      @config[:entrypoint] = 'sh'
-      @config[:args] = '-c "if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi"'
-      @user_args = []
+      docker.options['v'] << "#{cache_dir}:#{name}"
     end
 
-    @command_options = []
-    @command_args = String.new
-    gather_options
-    gather_args
-    "docker run #{@additional_options.join(' ')} #{@command_options.join(' ')} #{@config[:image]} #{@command_args}"
+    # "Environment cloning", that is, give the command an environment
+    # that looks as much as possible that it's running locally.
+    unless @config[:raw]
+      docker.options['init'] = true
+      docker.options['u'] = "#{Process.uid}:#{Process.gid}"
+      docker.options['w'] = Dir.pwd
+      docker.options['v'] << "#{@config_file.root}:#{@config_file.root}"
+
+      env_vars = %w[HOME USER USERNAME LOGNAME].collect { |var| ENV.include?(var) ? var : nil }.compact
+      env_vars.each do |x|
+        docker.options['e'] << x
+      end
+    end
+
+    # Set entrypoint and image arg.
+    docker.options['entrypoint'] = @config[:entrypoint] if @config[:entrypoint]
+
+    docker.args << @config[:image]
+
+    # Handle args from config and command line. Also running a shell
+    # instead.
+    if !@run_shell
+      args = (@config[:args] || '').shellsplit + @user_args
+      args.each do |arg|
+        docker.args << arg
+      end
+    else
+      docker.options['entrypoint'] = 'sh'
+      '-c "if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi"'.shellsplit.each do |arg|
+        docker.args << arg
+      end
+    end
+
+    # Handle port from args.
+    if @config[:port_from_args]
+      abort "rid: invalid port_from_args regexp \"#{@config[:port_from_args]}\"" unless
+        @config[:port_from_args] =~ %r{^/(.*)/$}
+
+      regexp = Regexp.last_match(1)
+
+      abort "rid: invalid port_from_args regexp \"#{regexp}\" didn't match args \"#{args}\"" unless
+        docker.args_to_s =~ Regexp.new(regexp)
+
+      port = Regexp.last_match(1)
+
+      abort "rid: invalid port_from_args port number \"#{port}\"" unless port =~ /^\d+$/
+
+      docker.options['p'] << "#{port}:#{port}"
+    end
+
+    docker
   end
 
+  # Ensure a cache directory exists.
   def ensure_cachedir(name)
     # Ensure that the .cache directory exists, just in case.
     Dir.mkdir(XDG_CACHE_DIR) unless File.exist? XDG_CACHE_DIR
@@ -201,7 +254,7 @@ dir = Dir.pwd
 while dir != '/'
   file = File.join(dir, '.rid.yml')
 
-  config_files << file if File.exists?(file)
+  config_files << file if File.exist?(file)
 
   dir = File.dirname(dir)
 end
@@ -225,7 +278,7 @@ command = config.command(name)
 
 command.user_args << ARGV
 command.run_shell = run_shell
-command = command.to_s
 
-puts "rid: would run: #{command}" if dry_run
-exec command unless dry_run
+puts "rid: would run: #{command.command}" if dry_run
+
+command.command.exec unless dry_run
