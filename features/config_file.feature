@@ -20,15 +20,15 @@ Feature: The program should apply the configuration in the config file.
       """
     When I type "rid hadolint -" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -v <user home>/dev:<user home>/dev |
-      | -u <user uid>:<user gid>           |
-      | -w <user home>/dev                 |
-      | hadolint/hadolint                  |
-      | hadolint -                         |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --volume <user home>/dev:<user home>/dev |
+      | --user <user uid>:<user gid>             |
+      | --workdir <user home>/dev                |
+      | hadolint/hadolint                        |
+      | hadolint -                               |
 
   Scenario: Should not add init, user id, root mountpoint and cwd for "raw" commands.
     Given I have a "dev" config file:
@@ -43,7 +43,7 @@ Feature: The program should apply the configuration in the config file.
     Then it runs "docker run" with:
       | arg               |
       | --rm              |
-      | -i                |
+      | --interactive     |
       | hadolint/hadolint |
       | hadolint -        |
 
@@ -60,7 +60,7 @@ Feature: The program should apply the configuration in the config file.
     Then it runs "docker run" with:
       | arg               |
       | --rm              |
-      | -i                |
+      | --interactive     |
       | hadolint/hadolint |
       | hadolint -        |
 
@@ -76,12 +76,12 @@ Feature: The program should apply the configuration in the config file.
     And I have a "dive" symlink
     When I type "dive image" in "dev"
     Then it runs "docker run" with:
-      | arg                                          |
-      | --rm                                         |
-      | -i                                           |
-      | -v /var/run/docker.sock:/var/run/docker.sock |
-      | wagoodman/dive:latest                        |
-      | image                                        |
+      | arg                                                |
+      | --rm                                               |
+      | --interactive                                      |
+      | --volume /var/run/docker.sock:/var/run/docker.sock |
+      | wagoodman/dive:latest                              |
+      | image                                              |
 
   Scenario: Supports multiple mounts
     Given I have a "dev" config file:
@@ -97,13 +97,13 @@ Feature: The program should apply the configuration in the config file.
     And I have a "dive" symlink
     When I type "dive image" in "dev"
     Then it runs "docker run" with:
-      | arg                                          |
-      | --rm                                         |
-      | -i                                           |
-      | -v /var/run/docker.sock:/var/run/docker.sock |
-      | -v /tmp/random:/tmp/random                   |
-      | wagoodman/dive:latest                        |
-      | image                                        |
+      | arg                                                |
+      | --rm                                               |
+      | --interactive                                      |
+      | --volume /var/run/docker.sock:/var/run/docker.sock |
+      | --volume /tmp/random:/tmp/random                   |
+      | wagoodman/dive:latest                              |
+      | image                                              |
 
   Scenario: Uses entry point configuration
     Given I have a "dev" config file:
@@ -115,16 +115,16 @@ Feature: The program should apply the configuration in the config file.
       """
     When I type "rid php script.php" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -v <user home>/dev:<user home>/dev |
-      | -u <user uid>:<user gid>           |
-      | -w <user home>/dev                 |
-      | --entrypoint php                   |
-      | php:7.4                            |
-      | script.php                         |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --volume <user home>/dev:<user home>/dev |
+      | --user <user uid>:<user gid>             |
+      | --workdir <user home>/dev                |
+      | --entrypoint php                         |
+      | php:7.4                                  |
+      | script.php                               |
 
   Scenario: Supports single cache configuration
     Given I have a "dev" config file:
@@ -137,17 +137,17 @@ Feature: The program should apply the configuration in the config file.
       """
     When I type "rid composer install" in "dev"
     Then it runs "docker run" with:
-      | arg                                                                       |
-      | --rm                                                                      |
-      | -i                                                                        |
-      | --init                                                                    |
-      | -v <user home>/dev:<user home>/dev                                        |
-      | -u <user uid>:<user gid>                                                  |
-      | -w <user home>/dev                                                        |
-      | -v <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
-      | --entrypoint composer                                                     |
-      | reload/drupal-php7-fpm:7.3                                                |
-      | install                                                                   |
+      | arg                                                                             |
+      | --rm                                                                            |
+      | --interactive                                                                   |
+      | --init                                                                          |
+      | --volume <user home>/dev:<user home>/dev                                        |
+      | --user <user uid>:<user gid>                                                    |
+      | --workdir <user home>/dev                                                       |
+      | --volume <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
+      | --entrypoint composer                                                           |
+      | reload/drupal-php7-fpm:7.3                                                      |
+      | install                                                                         |
 
   Scenario: Supports multiple cache entries configuration
     Given I have a "dev" config file:
@@ -162,18 +162,18 @@ Feature: The program should apply the configuration in the config file.
       """
     When I type "rid composer install" in "dev"
     Then it runs "docker run" with:
-      | arg                                                                       |
-      | --rm                                                                      |
-      | -i                                                                        |
-      | --init                                                                    |
-      | -v <user home>/dev:<user home>/dev                                        |
-      | -u <user uid>:<user gid>                                                  |
-      | -w <user home>/dev                                                        |
-      | -v <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
-      | -v <rid cache>/composer/!home!<user name>!.local:/home/<user name>/.local |
-      | --entrypoint composer                                                     |
-      | reload/drupal-php7-fpm:7.3                                                |
-      | install                                                                   |
+      | arg                                                                             |
+      | --rm                                                                            |
+      | --interactive                                                                   |
+      | --init                                                                          |
+      | --volume <user home>/dev:<user home>/dev                                        |
+      | --user <user uid>:<user gid>                                                    |
+      | --workdir <user home>/dev                                                       |
+      | --volume <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
+      | --volume <rid cache>/composer/!home!<user name>!.local:/home/<user name>/.local |
+      | --entrypoint composer                                                           |
+      | reload/drupal-php7-fpm:7.3                                                      |
+      | install                                                                         |
 
   Scenario: Should allow for inheriting from another command
     Given I have a "dev" config file:
@@ -192,7 +192,7 @@ Feature: The program should apply the configuration in the config file.
     Then it runs "docker run" with:
       | arg                    |
       | --rm                   |
-      | -i                     |
+      | --interactive          |
       | node:14                |
       | --entrypoint someother |
       | test -                 |
@@ -209,17 +209,17 @@ Feature: The program should apply the configuration in the config file.
       """
     When I type "rid serenata -u 1234" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -v <user home>/dev:<user home>/dev |
-      | -u <user uid>:<user gid>           |
-      | -w <user home>/dev                 |
-      | --entrypoint php                   |
-      | php:7.4                            |
-      | -p 1234:1234                       |
-      | /serenata.phar -u 1234             |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --volume <user home>/dev:<user home>/dev |
+      | --user <user uid>:<user gid>             |
+      | --workdir <user home>/dev                |
+      | --entrypoint php                         |
+      | php:7.4                                  |
+      | --publish 1234:1234                      |
+      | /serenata.phar -u 1234                   |
 
   Scenario: Should not remove container when keep specified.
     Given I have a "dev" config file:
@@ -234,6 +234,6 @@ Feature: The program should apply the configuration in the config file.
     When I type "rid hadolint -" in "dev"
     Then it runs "docker run" with:
       | arg               |
-      | -i                |
+      | --interactive     |
       | hadolint/hadolint |
       | hadolint -        |

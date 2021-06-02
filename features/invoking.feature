@@ -34,15 +34,15 @@ Feature: Program should handle arguments.
     Then it runs "docker run" with:
       | arg                                                                                                                 |
       | --rm                                                                                                                |
-      | -i                                                                                                                  |
+      | --interactive                                                                                                                  |
       | --init                                                                                                              |
-      | -v <user home>/dev:<user home>/dev                                                                                  |
-      | -u <user uid>:<user gid>                                                                                            |
-      | -w <user home>/dev                                                                                                  |
+      | --volume <user home>/dev:<user home>/dev                                                                                  |
+      | --user <user uid>:<user gid>                                                                                            |
+      | --workdir <user home>/dev                                                                                                  |
       | --entrypoint sh                                                                                                     |
       | platform                                                                                                            |
       | -c                                                                                                                  |
-      | if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi |
+      | if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi       |
 
   Scenario: Should propagate some env variables
     Given I have a "dev" config file:
@@ -57,15 +57,15 @@ Feature: Program should handle arguments.
     Then it runs "docker run" with:
       | arg                                |
       | --rm                               |
-      | -i                                 |
+      | --interactive                                 |
       | --init                             |
-      | -e HOME                            |
-      | -e USER                            |
-      | -e USERNAME                        |
-      | -e LOGNAME                         |
-      | -u <user uid>:<user gid>           |
-      | -v <user home>/dev:<user home>/dev |
-      | -w <user home>/dev                 |
+      | --env HOME                            |
+      | --env USER                            |
+      | --env USERNAME                        |
+      | --env LOGNAME                         |
+      | --user <user uid>:<user gid>           |
+      | --volume <user home>/dev:<user home>/dev |
+      | --workdir <user home>/dev                 |
       | --entrypoint php                   |
       | php:7.4                            |
       | somescript.php                     |
@@ -83,5 +83,5 @@ Feature: Program should handle arguments.
     # This is blittle, but really no way around it.
     Then it should output:
       """
-      rid: would run: docker run --rm -i --init -u <user uid>:<user gid> -w /tmp/rid/home/dev -v /tmp/rid/home/dev:/tmp/rid/home/dev -e HOME -e USER -e USERNAME -e LOGNAME --entrypoint /usr/local/bin/platform platform some arg
+      rid: would run: docker run --rm --interactive --init --user <user uid>:<user gid> --workdir /tmp/rid/home/dev --volume /tmp/rid/home/dev:/tmp/rid/home/dev --env HOME --env USER --env USERNAME --env LOGNAME --entrypoint /usr/local/bin/platform platform some arg
       """

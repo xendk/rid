@@ -136,31 +136,31 @@ class Command
 
     # Basic options.
     docker.options['rm'] = true unless @config[:keep]
-    docker.options['i'] = true
-    docker.options['t'] = true if $stdin.tty?
+    docker.options['interactive'] = true
+    docker.options['tty'] = true if $stdin.tty?
 
     # Volumes and cache directories.
     @mounts.each do |mountpoint|
-      docker.options['v'] << "#{mountpoint}:#{mountpoint}"
+      docker.options['volume'] << "#{mountpoint}:#{mountpoint}"
     end
 
     @caches.each do |name|
       name.gsub!(/\$USER/, Etc.getlogin)
       cache_dir = ensure_cachedir(name)
-      docker.options['v'] << "#{cache_dir}:#{name}"
+      docker.options['volume'] << "#{cache_dir}:#{name}"
     end
 
     # "Environment cloning", that is, give the command an environment
     # that looks as much as possible that it's running locally.
     unless @config[:raw]
       docker.options['init'] = true
-      docker.options['u'] = "#{Process.uid}:#{Process.gid}"
-      docker.options['w'] = Dir.pwd
-      docker.options['v'] << "#{@config_file.root}:#{@config_file.root}"
+      docker.options['user'] = "#{Process.uid}:#{Process.gid}"
+      docker.options['workdir'] = Dir.pwd
+      docker.options['volume'] << "#{@config_file.root}:#{@config_file.root}"
 
       env_vars = %w[HOME USER USERNAME LOGNAME].collect { |var| ENV.include?(var) ? var : nil }.compact
       env_vars.each do |x|
-        docker.options['e'] << x
+        docker.options['env'] << x
       end
     end
 
@@ -197,7 +197,7 @@ class Command
 
       abort "rid: invalid port_from_args port number \"#{port}\"" unless port =~ /^\d+$/
 
-      docker.options['p'] << "#{port}:#{port}"
+      docker.options['publish'] << "#{port}:#{port}"
     end
 
     docker

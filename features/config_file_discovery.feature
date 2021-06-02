@@ -33,10 +33,10 @@ Feature: The program should find the appropiate config files.
       """
     When I type "rid test" in "dev/test"
     Then it runs "docker run" with:
-      | arg  |
-      | --rm |
-      | -i   |
-      | test |
+      | arg           |
+      | --rm          |
+      | --interactive |
+      | test          |
 
   Scenario: Should run command in parent config file
     Given I have a "dev" config file:
@@ -51,10 +51,10 @@ Feature: The program should find the appropiate config files.
       """
     When I type "rid test" in "dev/test"
     Then it runs "docker run" with:
-      | arg  |
-      | --rm |
-      | -i   |
-      | test |
+      | arg           |
+      | --rm          |
+      | --interactive |
+      | test          |
 
   Scenario: Commands should shadow their parent per default
     Given I have a "dev" config file:
@@ -73,10 +73,10 @@ Feature: The program should find the appropiate config files.
       """
     When I type "rid test" in "dev/test"
     Then it runs "docker run" with:
-      | arg        |
-      | --rm       |
-      | -i         |
-      | not-a-test |
+      | arg           |
+      | --rm          |
+      | --interactive |
+      | not-a-test    |
 
   Scenario: Commands should inherit form their parent if specified
     Given I have a "dev" config file:
@@ -96,11 +96,11 @@ Feature: The program should find the appropiate config files.
       """
     When I type "rid test" in "dev/test"
     Then it runs "docker run" with:
-      | arg        |
-      | --rm       |
-      | -i         |
-      | not-a-test |
-      | testargs   |
+      | arg           |
+      | --rm          |
+      | --interactive |
+      | not-a-test    |
+      | testargs      |
 
   Scenario: Inheriting should override parent.
     Given I have a "dev" config file:
@@ -121,7 +121,7 @@ Feature: The program should find the appropiate config files.
       """
     When I type "rid test" in "dev/test"
     Then it runs "docker run" with:
-      | arg      |
-      | --rm     |
-      | -i       |
-      | test2    |
+      | arg           |
+      | --rm          |
+      | --interactive |
+      | test2         |

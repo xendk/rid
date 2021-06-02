@@ -58,7 +58,7 @@ Then('it runs {string} with:') do |string, table|
   # contains some "-e something" we look for above. Also allows us to
   # check for the variables above.
   ['HOME', 'USERNAME', 'LOGNAME', 'USER'].each do |var|
-    line.gsub!(/-e #{var}/, '')
+    line.gsub!(/--env #{var}/, '')
   end
 
   line.strip!

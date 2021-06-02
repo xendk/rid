@@ -11,16 +11,16 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "php" symlink
     When I type "php somescript.php" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -u <user uid>:<user gid>           |
-      | -v <user home>/dev:<user home>/dev |
-      | -w <user home>/dev                 |
-      | --entrypoint php                   |
-      | php:7.4                            |
-      | somescript.php                     |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --user <user uid>:<user gid>             |
+      | --volume <user home>/dev:<user home>/dev |
+      | --workdir <user home>/dev                |
+      | --entrypoint php                         |
+      | php:7.4                                  |
+      | somescript.php                           |
 
   Scenario: Runs phpcs
     Given I have a "dev" config file:
@@ -36,11 +36,11 @@ Feature: Smoke test on initially hardcoded commands
     Then it runs "docker run" with:
       | arg                                            |
       | --rm                                           |
-      | -i                                             |
+      | --interactive                                  |
       | --init                                         |
-      | -u <user uid>:<user gid>                       |
-      | -v <user home>/dev:<user home>/dev             |
-      | -w <user home>/dev                             |
+      | --user <user uid>:<user gid>                   |
+      | --volume <user home>/dev:<user home>/dev       |
+      | --workdir <user home>/dev                      |
       | --entrypoint php                               |
       | reload/drupal-php7-fpm:7.3                     |
       | /home/<user name>/php-stuff/vendor/bin/phpcs . |
@@ -57,17 +57,17 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "serenata" symlink
     When I type "serenata -u 1234" in "dev"
     Then it runs "docker run" with:
-      | arg                                                                       |
-      | --rm                                                                      |
-      | -i                                                                        |
-      | --init                                                                    |
-      | -u <user uid>:<user gid>                                                  |
-      | -v <user home>/dev:<user home>/dev                                        |
-      | -v <rid cache>/serenata/!home!<user name>!.cache:/home/<user name>/.cache |
-      | -w <user home>/dev                                                        |
-      | -p 1234:1234                                                              |
-      | serenata                                                                  |
-      | -u 1234                                                                   |
+      | arg                                                                             |
+      | --rm                                                                            |
+      | --interactive                                                                   |
+      | --init                                                                          |
+      | --user <user uid>:<user gid>                                                    |
+      | --volume <user home>/dev:<user home>/dev                                        |
+      | --volume <rid cache>/serenata/!home!<user name>!.cache:/home/<user name>/.cache |
+      | --workdir <user home>/dev                                                       |
+      | --publish 1234:1234                                                             |
+      | serenata                                                                        |
+      | -u 1234                                                                         |
 
   Scenario: Runs composer
     Given I have a "dev" config file:
@@ -81,17 +81,17 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "composer" symlink
     When I type "composer install" in "dev"
     Then it runs "docker run" with:
-      | arg                                                                       |
-      | --rm                                                                      |
-      | -i                                                                        |
-      | --init                                                                    |
-      | -v <user home>/dev:<user home>/dev                                        |
-      | -u <user uid>:<user gid>                                                  |
-      | -w <user home>/dev                                                        |
-      | -v <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
-      | --entrypoint composer                                                     |
-      | reload/drupal-php7-fpm:7.3                                                |
-      | install                                                                   |
+      | arg                                                                             |
+      | --rm                                                                            |
+      | --interactive                                                                   |
+      | --init                                                                          |
+      | --volume <user home>/dev:<user home>/dev                                        |
+      | --user <user uid>:<user gid>                                                    |
+      | --workdir <user home>/dev                                                       |
+      | --volume <rid cache>/composer/!home!<user name>!.cache:/home/<user name>/.cache |
+      | --entrypoint composer                                                           |
+      | reload/drupal-php7-fpm:7.3                                                      |
+      | install                                                                         |
 
   Scenario: Runs docker-langserver
     Given I have a "dev" config file:
@@ -103,15 +103,15 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "docker-langserver" symlink
     When I type "docker-langserver args" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -u <user uid>:<user gid>           |
-      | -v <user home>/dev:<user home>/dev |
-      | -w <user home>/dev                 |
-      | rcjsuen/docker-langserver:latest   |
-      | args                               |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --user <user uid>:<user gid>             |
+      | --volume <user home>/dev:<user home>/dev |
+      | --workdir <user home>/dev                |
+      | rcjsuen/docker-langserver:latest         |
+      | args                                     |
 
   Scenario: Runs node
     Given I have a "dev" config file:
@@ -124,16 +124,16 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "node" symlink
     When I type "node stuff" in "dev"
     Then it runs "docker run" with:
-      | arg                                                     |
-      | --rm                                                    |
-      | -i                                                      |
-      | --init                                                  |
-      | -v <user home>/dev:<user home>/dev                      |
-      | -u <user uid>:<user gid>                                |
-      | -w <user home>/dev                                      |
-      | -v <rid cache>/node/!home!<user name>:/home/<user name> |
-      | node:14                                                 |
-      | stuff                                                   |
+      | arg                                                           |
+      | --rm                                                          |
+      | --interactive                                                 |
+      | --init                                                        |
+      | --volume <user home>/dev:<user home>/dev                      |
+      | --user <user uid>:<user gid>                                  |
+      | --workdir <user home>/dev                                     |
+      | --volume <rid cache>/node/!home!<user name>:/home/<user name> |
+      | node:14                                                       |
+      | stuff                                                         |
 
   Scenario: Runs hadolint
     Given I have a "dev" config file:
@@ -150,7 +150,7 @@ Feature: Smoke test on initially hardcoded commands
     Then it runs "docker run" with:
       | arg               |
       | --rm              |
-      | -i                |
+      | --interactive     |
       | hadolint/hadolint |
       | hadolint -        |
 
@@ -168,12 +168,12 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "dive" symlink
     When I type "dive image" in "dev"
     Then it runs "docker run" with:
-      | arg                                          |
-      | --rm                                         |
-      | -i                                           |
-      | -v /var/run/docker.sock:/var/run/docker.sock |
-      | wagoodman/dive:latest                        |
-      | image                                        |
+      | arg                                                |
+      | --rm                                               |
+      | --interactive                                      |
+      | --volume /var/run/docker.sock:/var/run/docker.sock |
+      | wagoodman/dive:latest                              |
+      | image                                              |
 
   Scenario: Runs typescript-language-server
     Given I have a "dev" config file:
@@ -187,11 +187,11 @@ Feature: Smoke test on initially hardcoded commands
     Then it runs "docker run" with:
       | arg                                          |
       | --rm                                         |
-      | -i                                           |
+      | --interactive                                |
       | --init                                       |
-      | -u <user uid>:<user gid>                     |
-      | -v <user home>/dev:<user home>/dev           |
-      | -w <user home>/dev                           |
+      | --user <user uid>:<user gid>                 |
+      | --volume <user home>/dev:<user home>/dev     |
+      | --workdir <user home>/dev                    |
       | typescript-language-server                   |
       | --tsserver-path /usr/bin/something and stuff |
 
@@ -210,12 +210,12 @@ Feature: Smoke test on initially hardcoded commands
     And I have a "bash-language-server" symlink
     When I type "bash-language-server and stuff" in "dev"
     Then it runs "docker run" with:
-      | arg                                |
-      | --rm                               |
-      | -i                                 |
-      | --init                             |
-      | -u <user uid>:<user gid>           |
-      | -v <user home>/dev:<user home>/dev |
-      | -w <user home>/dev                 |
-      | bash-language-server               |
-      | and stuff                          |
+      | arg                                      |
+      | --rm                                     |
+      | --interactive                            |
+      | --init                                   |
+      | --user <user uid>:<user gid>             |
+      | --volume <user home>/dev:<user home>/dev |
+      | --workdir <user home>/dev                |
+      | bash-language-server                     |
+      | and stuff                                |
