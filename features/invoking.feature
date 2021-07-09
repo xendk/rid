@@ -80,7 +80,7 @@ Feature: Program should handle arguments.
           args: some arg
       """
     When I type "rid --dry-run platform" in "dev"
-    # This is blittle, but really no way around it.
+    # This is brittle, but really no way around it.
     Then it should output:
       """
       rid: would run: docker run --rm --interactive --init --user <user uid>:<user gid> --workdir /tmp/rid/home/dev --volume /tmp/rid/home/dev:/tmp/rid/home/dev --env HOME --env USER --env USERNAME --env LOGNAME --entrypoint /usr/local/bin/platform platform some arg
