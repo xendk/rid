@@ -50,6 +50,7 @@ Before do
   @stdout = @stderr = ''
   @rc = 0
   @delete_files = []
+  @env = []
 end
 
 After do
@@ -65,6 +66,12 @@ After do
   end
 
   @delete_files = []
+
+  @env.each do |var|
+    ENV.delete(var) if ENV.key? var
+  end
+
+  @env = []
 end
 
 def run(command)

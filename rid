@@ -129,6 +129,7 @@ class Command
     @caches = config[:cache] ? Array(config[:cache]) : []
     @mounts = config[:mount] ? Array(config[:mount]) : []
     @mount_args = config[:mount_args] ? Array(config[:mount_args]) : []
+    @env_vars = config[:env] ? Array(config[:env]) : []
   end
 
   # Return the docker command.
@@ -159,7 +160,7 @@ class Command
       docker.options['workdir'] = Dir.pwd
       docker.options['volume'] << "#{@config_file.root}:#{@config_file.root}"
 
-      env_vars = %w[HOME USER USERNAME LOGNAME].collect { |var| ENV.include?(var) ? var : nil }.compact
+      env_vars = %w[HOME USER USERNAME LOGNAME].append(*@env_vars).collect { |var| ENV.include?(var) ? var : nil }.compact
       env_vars.each do |x|
         docker.options['env'] << x
       end

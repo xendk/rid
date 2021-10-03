@@ -39,6 +39,13 @@ Given('I have a {string} file in {string}') do |file, dir|
   FileUtils.touch(File.join(TESTHOME, dir, file))
 end
 
+Given('I have set the following environment variables:') do |table|
+  table.rows.each do |var, |
+    ENV[var] = 'some value'
+    @env << var
+  end
+end
+
 When('I type {string}') do |command|
   run command
 end
