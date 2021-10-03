@@ -128,6 +128,7 @@ class Command
     # Allow single value cache.
     @caches = config[:cache] ? Array(config[:cache]) : []
     @mounts = config[:mount] ? Array(config[:mount]) : []
+    @mount_args = config[:mount_args] ? Array(config[:mount_args]) : []
   end
 
   # Return the docker command.
@@ -169,11 +170,19 @@ class Command
 
     docker.args << @config[:image]
 
+    mount_args = @mount_args.map { |mount_arg| Regexp.new(mount_arg) }
+
     # Handle args from config and command line. Also running a shell
     # instead.
     if !@run_shell
       args = (@config[:args] || '').shellsplit + @user_args
+
+      # Add mounts for arguments matching mount_args.
       args.each do |arg|
+        mount_args.each do |mount_arg|
+          docker.options['volume'] << "#{arg}:#{arg}" if arg =~ mount_arg
+        end
+
         docker.args << arg
       end
     else
@@ -276,7 +285,7 @@ end
 
 command = config.command(name)
 
-command.user_args << ARGV
+command.user_args.push *ARGV
 command.run_shell = run_shell
 
 puts "rid: would run: #{command.command}" if dry_run

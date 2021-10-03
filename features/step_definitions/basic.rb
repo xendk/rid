@@ -29,6 +29,16 @@ Given('I have a {string} symlink') do |string|
   @delete_files << File.join(TESTBIN, string)
 end
 
+Given('I have a {string} file in {string}') do |file, dir|
+  begin
+    FileUtils.mkdir_p(File.join(TESTHOME, dir))
+    @delete_files << File.join(TESTHOME, File.split(dir)[0])
+  rescue Errno::EEXIST
+    nil
+  end
+  FileUtils.touch(File.join(TESTHOME, dir, file))
+end
+
 When('I type {string}') do |command|
   run command
 end
@@ -36,7 +46,7 @@ end
 When('I type {string} in {string}') do |command, dir|
   old_dir = Dir.pwd
   Dir.chdir File.join(TESTHOME, dir)
-  run command
+  run replace_placeholders(command)
   Dir.chdir old_dir
 end
 

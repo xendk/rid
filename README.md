@@ -168,3 +168,5 @@ commands:
   time.
 * `keep`: Don't remove the container when the command exits. Useful
   for debugging.
+* `mount_args` (regexp string or list of regexps): Mount in files
+   given in the arguments that exists and matches regexp.
