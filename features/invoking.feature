@@ -7,7 +7,7 @@ Feature: Program should handle arguments.
     When I type "rid" in "dev"
     Then it should exit with a "rid: no command given" error
 
-  Scenario: Should error out on unknown options
+  Scenario: Error out on unknown options
     Given I have a "dev" config file:
       """
       commands:
@@ -20,7 +20,7 @@ Feature: Program should handle arguments.
     Then it should exit with a "rid: unknown option --banana" error
 
 
-  Scenario: --shell should launch a shell instead of entrypoint
+  Scenario: --shell launches a shell instead of entrypoint
     Given I have a "dev" config file:
       """
       commands:
@@ -44,7 +44,7 @@ Feature: Program should handle arguments.
       | -c                                                                                                                  |
       | if [ -e /usr/bin/fish ]; then exec /usr/bin/fish; elif [ -e /bin/bash ]; then exec /bin/bash; else exec /bin/sh; fi |
 
-  Scenario: Should propagate some env variables
+  Scenario: Propagate some env variables
     Given I have a "dev" config file:
       """
       commands:
@@ -70,7 +70,7 @@ Feature: Program should handle arguments.
       | php:7.4                                  |
       | somescript.php                           |
 
-  Scenario: --dry-run should print command
+  Scenario: --dry-run prints command
     Given I have a "dev" config file:
       """
       commands:
