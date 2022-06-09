@@ -141,6 +141,9 @@ class Command
     docker.options['interactive'] = true
     docker.options['tty'] = true if $stdin.tty?
 
+    # Networking
+    docker.options['network'] = @config[:network] if @config[:network]
+
     # Volumes and cache directories.
     @mounts.each do |mountpoint|
       docker.options['volume'] << "#{mountpoint}:#{mountpoint}"

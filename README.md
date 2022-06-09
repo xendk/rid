@@ -170,3 +170,5 @@ commands:
   for debugging.
 * `mount_args` (regexp string or list of regexps): Mount in files
    given in the arguments that exists and matches regexp.
+* `network` (string): Network type or name. Same as the --network
+  argument to docker.
