@@ -4,6 +4,7 @@
 require 'etc'
 require 'yaml'
 require 'shellwords'
+require 'date'
 
 # Encapsulates a docker command.
 class Docker
@@ -53,6 +54,11 @@ class Docker
   # Run docker command.
   def run
     system(*command_array)
+  end
+
+  # Run docker command quietly.
+  def run_quiet
+    system(*command_array, out: File::NULL)
   end
 
   # Exec docker command.
@@ -113,16 +119,58 @@ class Config
   end
 end
 
+# Represents a buildable image.
+class Image
+  attr_accessor :name, :path, :file, :variant
+
+  def initialize(path, root)
+    begin
+      # Relative paths are relative to the config file. Config::root
+      # is equal to the directory of the config file.
+      @path = File.realpath(path[5..-1], root)
+    rescue Errno::ENOENT
+      abort "rid: cannot find #{path[5..-1]}"
+    end
+
+    @file = 'Dockerfile'
+    @variant = ''
+
+    if File.file? @path
+      @file = File.basename(@path)
+      @path = File.dirname(@path)
+    end
+
+    if @file != 'Dockerfile'
+      # TODO: should translate "Dockerfile-8.1" into "-8.1"
+
+      @variant = "-#{@file.gsub(/^Dockerfile[._-]?/, '')}"
+    end
+
+    @name = "#{File.basename(@path)}#{@variant}"
+  end
+
+  def tag
+    "#{@name}:rid"
+  end
+end
+
 # Handles the nitty-gritty of docker command setup.
 class Command
   attr_accessor :run_shell
-  attr_reader :name, :user_args, :additional_options
+  attr_reader :name, :user_args, :additional_options, :image
 
   def initialize(config_file, name, config)
     @config_file = config_file
     @config = config
     @name = name
     abort "rid: no image given for #{@name}" unless config[:image]
+    if @config[:image] =~ /^file:/
+      @image = Image.new(config[:image], @config_file.root)
+
+      # Set the image to the tag of the build image.
+      @config[:image] = "#{@image.tag}"
+    end
+
     @user_args = []
     @additional_options = []
     # Allow single value cache.
@@ -216,6 +264,86 @@ class Command
     docker
   end
 
+  def ensure_bulidable
+    unless buildable?
+      abort "rid: #{@config[:image]} not a buildable image. Use \"file:<path>\" to build a dockerfile"
+    end
+  end
+
+  def buildable?
+    @image
+  end
+
+  # Get time image was build.
+  # Returns hash of tag => build time if multiple tags matches.
+  # Returns nil if image not found.
+  def image_stamps(tag)
+    output = %x{docker images --format '{{.Tag}}\\t{{.CreatedAt}}' #{tag}}
+
+    stamps = {}
+    output.strip.lines(chomp: true).collect do |line|
+      parts = line.split(/\t/)
+      stamps[parts[0]] = DateTime.parse(parts[1]).to_time
+    end
+
+    return nil if stamps.empty?
+
+    stamps.length > 1 ? stamps : stamps[stamps.keys.first]
+  end
+
+  def needs_build?
+    return false unless buildable?
+
+    build_stamp = image_stamps @image.tag
+
+    if build_stamp
+      path = @image.path
+
+      path = File.dirname(path) if File.file? path
+
+      return find_youngest(path) > build_stamp
+    end
+
+    true
+  end
+
+  def build_dir
+    @image.path if buildable?
+  end
+
+  def verbose_build?
+    @config[:show_build]
+  end
+
+  def build_command
+    if buildable?
+      docker = Docker.new('build')
+      args = ''
+
+      docker.options['file'] = @image.file if @image.file != 'Dockerfile'
+      docker.options['label'] = "dk.xen.rid=#{@image.name}"
+      docker.options['tag'] = @image.tag
+      docker.args << '.'
+
+      docker
+    else
+      abort "rid: #{@config[:image]} not a buildable image. Use \"file:<path>\" to build a dockerfile"
+    end
+  end
+
+  def find_youngest(path)
+    candidates = [File.mtime(path)]
+    if File.directory? path
+      Dir.foreach(path) { |file|
+        next if file =~ /^..?$/
+
+        candidates << find_youngest(File.join(path, file))
+      }
+    end
+
+    candidates.max
+  end
+
   # Ensure a cache directory exists.
   def ensure_cachedir(name)
     # Ensure that the .cache directory exists, just in case.
@@ -238,6 +366,7 @@ name = File.basename($PROGRAM_NAME)
 
 run_shell = false
 dry_run = false
+build = false
 
 if name == 'rid'
   name = ARGV.shift
@@ -248,6 +377,8 @@ if name == 'rid'
       run_shell = true
     when '-n', '--dry-run'
       dry_run = true
+    when '-b', '--build'
+      build = true
     else
       abort("rid: unknown option #{name}")
     end
@@ -289,9 +420,27 @@ end
 
 command = config.command(name)
 
-command.user_args.push *ARGV
+command.user_args.push(*ARGV)
 command.run_shell = run_shell
+
+if build or command.needs_build?
+  command.ensure_bulidable
+
+  if dry_run
+    # TODO: where the hell does the backslash in the --tag argument come from?
+    puts "rid: would run: #{command.build_command}"
+  else
+    puts 'rid: building image...' if build || command.verbose_build?
+    Dir.chdir(command.build_dir) do
+      build || command.verbose_build? ? command.build_command.run : command.build_command.run_quiet
+    end
+    puts "rid: done" if build || command.verbose_build?
+  end
+end
 
 puts "rid: would run: #{command.command}" if dry_run
 
-command.command.exec unless dry_run
+# Flush output so it doesn't get swallowed by exec.
+$stdout.flush
+
+command.command.exec unless dry_run or build

@@ -1,6 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+case ARGV[0]
+when 'build'
+  puts "[docker build output]"
+when 'images'
+  # Assuming that the image name/tag is the last argument.
+  case ARGV.last
+  when 'my-image2:rid'
+    puts "rid\t2022-04-19 02:32:42 +0200 CEST"
+  end
+end
+
 File.open(File.join(__dir__, 'exec.log'), 'a') do |io|
-  io.puts "docker #{ARGV.join(' ')}"
+  io.puts "docker #{ARGV.join(' ')}\t#{Dir.getwd}"
 end

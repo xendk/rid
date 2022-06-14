@@ -73,6 +73,19 @@ the command name is still passed to the command.
 
 `-n`/`--dry-run`: Print the docker command that would be run.
 
+`-b`/`--build`: Build the image of the command, if a build-able image.
+
+# Automatic building
+
+Images can be specified as `file:<path>` in which case `rid` runs
+`docker build` in the given path. The path can include a filename if
+the file is not named `Dockerfile`. The image will be named after the
+directory, and tagged with the tag `rid`. `rid` will compare the
+modification times of the directory and all files within it to the
+last build time of the image to determine whether to rebuild the
+image, so it'll incur a performance penalty (not recommended for
+images with a large amount of files in the docker build directory).
+
 # Configuration file
 
 `rid` will look for `.rid.yml` files from the current directory and
@@ -147,7 +160,9 @@ commands:
 
 ## Command options
 
-* `image` (string): The image to run for this command.
+* `image` (string): The image to run for this command. May be a
+  `file:<path>` to build image on the fly. The path is relative to the
+  `.rid.yml` file location.
 * `entrypoint` (string): Override image entrypoint.
 * `args` (string): Additional args for the image. If the images entrypoint is
   the desired command, this is provided as command arguments. Any
@@ -172,3 +187,4 @@ commands:
    given in the arguments that exists and matches regexp.
 * `network` (string): Network type or name. Same as the --network
   argument to docker.
+* `show_build`: Also show build output when automatically rebuilding.
