@@ -124,14 +124,7 @@ class Image
   attr_accessor :name, :path, :file, :variant
 
   def initialize(path, root)
-    begin
-      # Relative paths are relative to the config file. Config::root
-      # is equal to the directory of the config file.
-      @path = File.realpath(path[5..-1], root)
-    rescue Errno::ENOENT
-      abort "rid: cannot find #{path[5..-1]}"
-    end
-
+    @path = check_path(path[5..-1], root)
     @file = 'Dockerfile'
     @variant = ''
 
@@ -140,13 +133,17 @@ class Image
       @path = File.dirname(@path)
     end
 
-    if @file != 'Dockerfile'
-      # TODO: should translate "Dockerfile-8.1" into "-8.1"
-
-      @variant = "-#{@file.gsub(/^Dockerfile[._-]?/, '')}"
-    end
+    @variant = "-#{@file.gsub(/^Dockerfile[._-]?/, '')}" if @file != 'Dockerfile'
 
     @name = "#{File.basename(@path)}#{@variant}"
+  end
+
+  def check_path(path, root)
+    # Relative paths are relative to the config file. Config::root
+    # is equal to the directory of the config file.
+    @path = File.realpath(path, root)
+  rescue Errno::ENOENT
+    abort "rid: cannot find #{path}"
   end
 
   def tag
@@ -168,7 +165,7 @@ class Command
       @image = Image.new(config[:image], @config_file.root)
 
       # Set the image to the tag of the build image.
-      @config[:image] = "#{@image.tag}"
+      @config[:image] = @image.tag.to_s
     end
 
     @user_args = []
@@ -211,7 +208,10 @@ class Command
       docker.options['workdir'] = Dir.pwd
       docker.options['volume'] << "#{@config_file.root}:#{@config_file.root}"
 
-      env_vars = %w[HOME USER USERNAME LOGNAME].append(*@env_vars).collect { |var| ENV.include?(var) ? var : nil }.compact
+      env_vars = %w[HOME USER USERNAME LOGNAME].append(*@env_vars).collect do |var|
+        ENV.include?(var) ? var : nil
+      end.compact
+
       env_vars.each do |x|
         docker.options['env'] << x
       end
@@ -265,9 +265,9 @@ class Command
   end
 
   def ensure_bulidable
-    unless buildable?
-      abort "rid: #{@config[:image]} not a buildable image. Use \"file:<path>\" to build a dockerfile"
-    end
+    return if buildable?
+
+    abort "rid: #{@config[:image]} not a buildable image. Use \"file:<path>\" to build a dockerfile"
   end
 
   def buildable?
@@ -278,7 +278,7 @@ class Command
   # Returns hash of tag => build time if multiple tags matches.
   # Returns nil if image not found.
   def image_stamps(tag)
-    output = %x{docker images --format '{{.Tag}}\\t{{.CreatedAt}}' #{tag}}
+    output = `docker images --format '{{.Tag}}\\t{{.CreatedAt}}' #{tag}`
 
     stamps = {}
     output.strip.lines(chomp: true).collect do |line|
@@ -318,7 +318,6 @@ class Command
   def build_command
     if buildable?
       docker = Docker.new('build')
-      args = ''
 
       docker.options['file'] = @image.file if @image.file != 'Dockerfile'
       docker.options['label'] = "dk.xen.rid=#{@image.name}"
@@ -334,11 +333,11 @@ class Command
   def find_youngest(path)
     candidates = [File.mtime(path)]
     if File.directory? path
-      Dir.foreach(path) { |file|
+      Dir.foreach(path) do |file|
         next if file =~ /^..?$/
 
         candidates << find_youngest(File.join(path, file))
-      }
+      end
     end
 
     candidates.max
@@ -423,7 +422,7 @@ command = config.command(name)
 command.user_args.push(*ARGV)
 command.run_shell = run_shell
 
-if build or command.needs_build?
+if build || command.needs_build?
   command.ensure_bulidable
 
   if dry_run
@@ -434,7 +433,7 @@ if build or command.needs_build?
     Dir.chdir(command.build_dir) do
       build || command.verbose_build? ? command.build_command.run : command.build_command.run_quiet
     end
-    puts "rid: done" if build || command.verbose_build?
+    puts 'rid: done' if build || command.verbose_build?
   end
 end
 
@@ -443,4 +442,4 @@ puts "rid: would run: #{command.command}" if dry_run
 # Flush output so it doesn't get swallowed by exec.
 $stdout.flush
 
-command.command.exec unless dry_run or build
+command.command.exec unless dry_run || build

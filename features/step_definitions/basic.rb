@@ -45,7 +45,7 @@ Given('{string} has modification time {string}') do |file, mtime|
 end
 
 Given('I have set the following environment variables:') do |table|
-  table.rows.each do |var, |
+  table.rows.each do |var,|
     ENV[var] = 'some value'
     @env << var
   end
@@ -70,15 +70,15 @@ Then('it runs {string} with:') do |string, table|
 
   case DockerRuns.instance.num_runs(string)
   when 0
-    raise "Command not run"
+    raise 'Command not run'
   when proc { |x| x > 1 }
-    raise "Command run multiple times"
+    raise 'Command run multiple times'
   end
 
   check_output(string, DockerRuns.instance.run(string).command, table)
 end
 
-Then ('it should not run {string}') do |command|
+Then('it should not run {string}') do |command|
   raise "#{command} was run" if DockerRuns.instance.num_runs(command).positive?
 end
 
@@ -87,9 +87,9 @@ Then('it runs {string} in {string} with:') do |command, dir, table|
 
   case DockerRuns.instance.num_runs(command)
   when 0
-    raise "Command not run"
+    raise 'Command not run'
   when proc { |x| x > 1 }
-    raise "Command run multiple times"
+    raise 'Command run multiple times'
   end
 
   p DockerRuns.instance.run(command)
@@ -99,7 +99,6 @@ Then('it runs {string} in {string} with:') do |command, dir, table|
 
   check_output(command, DockerRuns.instance.run(command).command, table)
 end
-
 
 Then('it should exit with a {string} error') do |string|
   raise "Command didn't error, output \"#{@stdout}\", stderr \"#{@stderr}\"" if @rc.success?
@@ -116,7 +115,7 @@ end
 Then('it should output nothing') do
   raise "Command errored, output \"#{@stdout}\", stderr \"#{@stderr}\"" unless @rc.success?
 
-  raise "Unexpected output \"#{@stdout}\"" unless @stdout.strip == ""
+  raise "Unexpected output \"#{@stdout}\"" unless @stdout.strip == ''
 end
 
 def replace_placeholders(string)
@@ -125,7 +124,7 @@ def replace_placeholders(string)
     '<user uid>' => Process.uid,
     '<user gid>' => Process.gid,
     '<user home>' => TESTHOME,
-    '<rid cache>' => File.join(TESTHOME, '.cache', 'rid'),
+    '<rid cache>' => File.join(TESTHOME, '.cache', 'rid')
   }
 
   string.gsub(/<[^>]+>/) do |match|
@@ -154,6 +153,7 @@ def check_output(string, command, table)
   raise "Unexpected argument(s) \"#{command}\"" unless command == ''
 end
 
+# Represents a run of a docker command.
 class DockerRun
   attr_reader :command, :cwd
 
@@ -162,6 +162,7 @@ class DockerRun
   end
 end
 
+# All run docker commands.
 class DockerRuns
   include Singleton
 
@@ -182,5 +183,4 @@ class DockerRuns
   def run(command)
     runs(command).pop
   end
-
 end
