@@ -146,7 +146,7 @@ Feature: rid should build images
     Then it should output:
       """
       rid: would run: docker build --label dk.xen.rid\=my-image --tag my-image:rid .
-      rid: would run: docker run --rm --interactive --init --user 1000:1000 --workdir /tmp/rid/home/dev --volume /tmp/rid/home/dev:/tmp/rid/home/dev --env HOME --env USER --env USERNAME --env LOGNAME my-image:rid
+      rid: would run: docker run --rm --interactive --init --user <user uid>:<user gid> --workdir /tmp/rid/home/dev --volume /tmp/rid/home/dev:/tmp/rid/home/dev --env HOME --env USER --env USERNAME --env LOGNAME my-image:rid
       """
 
   Scenario: Should not re-build image if image is newer
