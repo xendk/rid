@@ -170,6 +170,9 @@ commands:
 * `cache` (string or list of strings): Cache a directory. A cached directory is persistent between
   command invocations. Behind the scenes `rid` creates a directory per
   command and mounts it in.
+* `env` (string or list of strings): Additional environment variables
+  to forward (in addition to the defauls $HOME, $USER, $USERNAME and
+  $LOGNAME).
 * `inherit` (bool or string): Inherit from another command. If set to
   `true`, inherit from a command with the same name in a parent
   `.rid.yml` file. If set to a string, inherit from the named command.
