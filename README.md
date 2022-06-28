@@ -164,19 +164,21 @@ commands:
   `file:<path>` to build image on the fly. The path is relative to the
   `.rid.yml` file location.
 * `entrypoint` (string): Override image entrypoint.
-* `args` (string): Additional args for the image. If the images entrypoint is
-  the desired command, this is provided as command arguments. Any
-  extra arguments from the command line is appended to this.
-* `cache` (string or list of strings): Cache a directory. A cached directory is persistent between
-  command invocations. Behind the scenes `rid` creates a directory per
-  command and mounts it in.
+* `args` (string): Additional args for the image. If the images
+  entrypoint is the desired command, this is provided as command
+  arguments. Any extra arguments from the command line is appended to
+  this.
 * `env` (string or list of strings): Additional environment variables
-  to forward (in addition to the defauls $HOME, $USER, $USERNAME and
-  $LOGNAME).
+  to forward (in addition to the default `$HOME`, `$USER`, `$USERNAME` and
+  `$LOGNAME`).
+* `cache` (string or list of strings): Cache a directory. A cached
+  directory is persistent between command invocations. Behind the
+  scenes `rid` creates a directory per command and mounts it in.
 * `inherit` (bool or string): Inherit from another command. If set to
   `true`, inherit from a command with the same name in a parent
   `.rid.yml` file. If set to a string, inherit from the named command.
-* `mount` (string or list of strings): Mount in additional directories.
+* `mount` (string or list of strings): Mount in additional
+  directories.
 * `ports_from_args` (regexp string): Matches the regexp against the
   command args to extract a port number to bind to the host.
 * `raw` (bool): Don't mount in root filesystem, change effective
