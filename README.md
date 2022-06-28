@@ -169,8 +169,12 @@ commands:
   arguments. Any extra arguments from the command line is appended to
   this.
 * `env` (string or list of strings): Additional environment variables
-  to forward (in addition to the default `$HOME`, `$USER`, `$USERNAME` and
-  `$LOGNAME`).
+  to forward (in addition to the default `$HOME`, `$USER`, `$USERNAME`,
+  `$LOGNAME` and possibly `$SSH_AUTH_SOCK`).
+* `ssh_agent` (bool): Forward SSH agent to container. This mounts the
+  `$SSH_AUTH_SOCK` socket into the container and sets the variable. If
+  `$HOME/.ssh/known_hosts` exists, it's mounted in too to avoid ssh
+  asking about known hosts.
 * `cache` (string or list of strings): Cache a directory. A cached
   directory is persistent between command invocations. Behind the
   scenes `rid` creates a directory per command and mounts it in.

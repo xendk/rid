@@ -45,8 +45,8 @@ Given('{string} has modification time {string}') do |file, mtime|
 end
 
 Given('I have set the following environment variables:') do |table|
-  table.rows.each do |var,|
-    ENV[var] = 'some value'
+  table.rows.each do |var, val|
+    ENV[var] = val || 'some value'
     @env << var
   end
 end

@@ -186,6 +186,17 @@ class Command
     docker.options['interactive'] = true
     docker.options['tty'] = true if $stdin.tty?
 
+    # SSH agent forwarding
+    if @config[:ssh_agent] && ENV.include?('SSH_AUTH_SOCK')
+      docker.options['volume'] << "#{ENV['SSH_AUTH_SOCK']}:#{ENV['SSH_AUTH_SOCK']}"
+      docker.options['env'] << 'SSH_AUTH_SOCK'
+      # Add in known_hosts so ssh wont think every host is a new one.
+      known_hosts = File.join(ENV['HOME'], '.ssh/known_hosts')
+      if File.exist? known_hosts
+        docker.options['volume'] << "#{known_hosts}:#{known_hosts}"
+      end
+    end
+
     # Networking
     docker.options['network'] = @config[:network] if @config[:network]
 
