@@ -310,10 +310,13 @@ class Command
 
     build_stamp = image_stamps @image.tag
 
+    # Todo: if the dockerfile has been edited, but the resulting image
+    # isn't changed (if fidling with comments, for instance), the
+    # created time of the image will stay older as the dockerfile.
+    # --no-cache would probably fix this, but it'll make all builds
+    # slow.
     if build_stamp
-      path = @image.path
-
-      path = File.dirname(path) if File.file? path
+      path = File.join(@image.path, @image.file)
 
       return find_youngest(path) > build_stamp
     end
