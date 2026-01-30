@@ -196,4 +196,4 @@ commands:
    given in the arguments that exists and matches regexp.
 * `network` (string): Network type or name. Same as the --network
   argument to docker.
-* `show_build`: Also show build output when automatically rebuilding.
+* `show_build` (bool): Also show build output when automatically rebuilding.
