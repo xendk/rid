@@ -92,6 +92,9 @@ class Config
     command = @config.dig(:commands, name.intern)
 
     if command
+      # Note the root dir for images.
+      command[:image_root] = @root if command.has_key? :image
+
       # Merge in options if we inherit.
       command = command_inherit(name, command)
     elsif @parent
@@ -162,7 +165,7 @@ class Command
     @name = name
     abort "rid: no image given for #{@name}" unless config[:image]
     if @config[:image] =~ /^file:/
-      @image = Image.new(config[:image], @config_file.root)
+      @image = Image.new(config[:image], config[:image_root])
 
       # Set the image to the tag of the build image.
       @config[:image] = @image.tag.to_s

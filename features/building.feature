@@ -276,3 +276,38 @@ Feature: rid should build images
       | --volume <user home>/dev/sub:<user home>/dev/sub |
       | --workdir <user home>/dev/sub                    |
       | my-image:rid                                     |
+
+  Scenario: Should use image relative to the file it was referenced in
+    Given I have a "dev" config file:
+      """
+      commands:
+        custom-image:
+          image: file:<user home>/my-image
+      """
+    Given I have a "dev/sub" config file:
+      """
+      commands:
+        unrelated:
+          image: foo
+      """
+    And I have a "Dockerfile" file in "my-image"
+    When I type "rid custom-image" in "dev/sub"
+    Then it should output nothing
+    And it runs "docker images" with:
+      | arg                               |
+      | --format {{.Tag}}\t{{.CreatedAt}} |
+      | my-image:rid                      |
+    And it runs "docker build" in "my-image" with:
+      | arg                         |
+      | --label dk.xen.rid=my-image |
+      | --tag my-image:rid          |
+      | .                           |
+    And it runs "docker run" with:
+      | arg                                              |
+      | --rm                                             |
+      | --interactive                                    |
+      | --init                                           |
+      | --user <user uid>:<user gid>                     |
+      | --volume <user home>/dev/sub:<user home>/dev/sub |
+      | --workdir <user home>/dev/sub                    |
+      | my-image:rid                                     |
